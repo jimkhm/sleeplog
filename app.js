@@ -9,6 +9,7 @@ var index = require('./routes/index');
 var users = require('./routes/users');
 
 var loginroutes = require('./routes/loginroutes');
+var sha256 = require('sha256');
 
 var app = express();
 
@@ -29,72 +30,64 @@ app.get('/form', function(req, res) {
   res.render('form');
 });
 
-// app.get('/register_success', function(req, res) {
-//   res.render('register_success');
-// });
-
 app.get('/login_form', function(req, res) {
   res.render('login_form');
 });
 
-// app.get('/login_success', function(req, res) {
-//   res.render('login_success');
-// });
 
-const mysqlConnection = require('./modules/mysql');
+//const mysqlConnection = require('./modules/mysql');
+const mysqlConnection = require('mysql');
 
+var pool  = mysqlConnection.createPool({
+  connectionLimit : 10,
+  host            : 'localhost',
+  user            : 'root',
+  password        : '1121ujung',
+  database        : 'sleeplog'
+});
 
-// app.get('/register', function(req, res) {
-//   var email = req.query.email;
-//   var password = req.query.password;
-//
-//   res.send(email+', '+password)
-//
-// });
 
 app.post('/register',function(req, res) {
 
-  console.log(req.body);
+  //mysqlConnection.connect();
   var today = new Date();
-  var users = {
-    "email": req.body.email,
-    "password": req.body.password,
-    "created_at": today,
-    "updated_at": today
-  }
 
-  mysqlConnection.connect();
+    var users = {
+      "email": req.body.email,
+      "password": sha256(req.body.password+today),
+      "created_at": today,
+      "updated_at": today
+    }
 
-  const query =mysqlConnection.query('INSERT INTO user SET ?', users,
-    function(error, results, fields) {
-      if (error) {
-        console.log("error ocurrd ", error);
-        res.send({
-          "code": 400,
-          "failed": "error ocurred: " + error
-        })
-      } else {
-        console.log('The solution is: ', results);
-        // res.send({
-        //   "code": 200,
-        //   "success": "user registered sucessfully"
-        // });
+    const query =pool.query('INSERT INTO user SET ?', users,
+      function(error, results, fields) {
+        if (error) {
+          console.log("error ocurrd ", error);
+          res.send({
+            "code": 400,
+            "failed": "error ocurred: " + error
+          })
+        } else {
+          console.log('The solution is: ', results);
+          // res.send({
+          //   "code": 200,
+          //   "success": "user registered sucessfully"
+          // });
+          //mysqlConnection.end();
 
-        res.render('register_success');
-      }
-    });
-
-    mysqlConnection.end();
-
+          res.render('register_success');
+        }
+      });
 });
 
 app.post('/login', function(req, res) {
+
   var email = req.body.email;
   var password = req.body.password;
 
-  mysqlConnection.connect();
+  //mysqlConnection.connect();
 
-  mysqlConnection.query('SELECT * FROM user WHERE email=?', [email],
+  pool.query('SELECT * FROM user WHERE email=?', [email],
   function(error, results, fields) {
     if (error) {
       // console.log("error ocurred", error);
@@ -105,18 +98,22 @@ app.post('/login', function(req, res) {
     } else {
       // console.log('The solution is: ', result);
       if(results.length >0){
-        if(results[0].password == password) {
-          // res.send({
-          //   "code": 200,
-          //   "success": "login sucessfull"
-          // });
-          res.render('login_success');
-        } else {
-          res.send({
-            "code": 204,
-            "success": "Email and password does not match"
-          });
-        }
+          console.log(results[0].password);
+          console.log(results[0].created_at);
+          console.log(sha256(password+results[0].created_at));
+
+          if(results[0].password == sha256(password+results[0].created_at) ) {
+            // res.send({
+            //   "code": 200,
+            //   "success": "login sucessfull"
+            // });
+            res.render('login_success');
+          } else {
+            res.send({
+              "code": 204,
+              "success": "Email and password does not match"
+            });
+          }
       } else {
         res.send({
           "code": 204,
@@ -125,7 +122,7 @@ app.post('/login', function(req, res) {
       }
     }
   })
-  mysqlConnection.end();
+  //mysqlConnection.end();
 });
 
 
@@ -142,10 +139,6 @@ app.post('/login', function(req, res) {
 // console.log(query.sql);
 
 //loginroutes.register(req, res, mysqlConnection);
-
-
-
-
 
 app.use('/', index);
 app.use('/users', users);
