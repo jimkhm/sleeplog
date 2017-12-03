@@ -12,6 +12,7 @@ var loginroutes = require('./routes/loginroutes');
 var sha256 = require('sha256');
 
 var app = express();
+app.locals.pretty = true;
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -34,50 +35,61 @@ app.get('/login_form', function(req, res) {
   res.render('login_form');
 });
 
+app.get('/controller', function(req, res) {
+  res.render('sleepLogController');
+});
 
-//const mysqlConnection = require('./modules/mysql');
-const mysqlConnection = require('mysql');
-
-var pool  = mysqlConnection.createPool({
-  connectionLimit : 10,
-  host            : 'localhost',
-  user            : 'root',
-  password        : '1121ujung',
-  database        : 'sleeplog'
+app.post('/controller_reciever', function(req, res) {
+  if(req.body.user_id !== "undefined"){//Id check
+    if(req.body.start.slice(-5) === "SLEEP"){
+      res.send(req.body.start.slice(-5));
+    }
+  } else {
+    res.send("Please Login")
+  }
 });
 
 
+const pool = require('./modules/mysql');
+
 app.post('/register',function(req, res) {
 
-  //mysqlConnection.connect();
-  var today = new Date();
+  function validateEmail(email) {
+    var re = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|gov|mil|biz|info|mobi|name|aero|jobs|museum)\b/;
+    return re.test(email);
+  }
 
-    var users = {
-      "email": req.body.email,
-      "password": sha256(req.body.password+today),
-      "created_at": today,
-      "updated_at": today
-    }
+  const emailValidation = validateEmail(req.body.email);
 
-    const query =pool.query('INSERT INTO user SET ?', users,
-      function(error, results, fields) {
-        if (error) {
-          console.log("error ocurrd ", error);
-          res.send({
-            "code": 400,
-            "failed": "error ocurred: " + error
-          })
-        } else {
-          console.log('The solution is: ', results);
-          // res.send({
-          //   "code": 200,
-          //   "success": "user registered sucessfully"
-          // });
-          //mysqlConnection.end();
+  if(!emailValidation){
+    res.status(400).send({
+      message: "invalided email address"
+    })
+  }else{
+    //mysqlConnection.connect();
+    var today = new Date();
 
-          res.render('register_success');
-        }
-      });
+      var users = {
+        "email": req.body.email,
+        "password": sha256(req.body.password+today),
+        "created_at": today,
+        "updated_at": today
+      }
+
+      const query =pool.query('INSERT INTO user SET ?', users,
+        function(error, results, fields) {
+          if (error) {
+            console.log("error ocurrd ", error);
+            res.send({
+              "code": 400,
+              "failed": "error ocurred: " + error
+            })
+          } else {
+            console.log('The solution is: ', results);
+            res.render('register_success');
+          }
+        });
+  }
 });
 
 app.post('/login', function(req, res) {
@@ -85,33 +97,23 @@ app.post('/login', function(req, res) {
   var email = req.body.email;
   var password = req.body.password;
 
-  //mysqlConnection.connect();
-
   pool.query('SELECT * FROM user WHERE email=?', [email],
   function(error, results, fields) {
     if (error) {
       // console.log("error ocurred", error);
-      res.send({
-        "code": 400,
-        "failed": "error ocurred"
+      res.status(500).send({
+        message: "error ocurred: "+error
       })
     } else {
       // console.log('The solution is: ', result);
       if(results.length >0){
-          console.log(results[0].password);
-          console.log(results[0].created_at);
-          console.log(sha256(password+results[0].created_at));
 
-          if(results[0].password == sha256(password+results[0].created_at) ) {
-            // res.send({
-            //   "code": 200,
-            //   "success": "login sucessfull"
-            // });
+          if(results[0].password === sha256(password+results[0].created_at) ) {
             res.render('login_success');
           } else {
-            res.send({
-              "code": 204,
-              "success": "Email and password does not match"
+            res.status(200).send({
+              "success": false,
+              "message": "Email and password does not match"
             });
           }
       } else {
@@ -122,23 +124,8 @@ app.post('/login', function(req, res) {
       }
     }
   })
-  //mysqlConnection.end();
 });
 
-
-
-//const time = new Date();
-
-//const userInfo = {email: "test5@test.com", password: "1234", created_at: time, updated_at: time };
-
-// const query = mysqlConnection.query('INSERT INTO USER SET ?',userInfo , function (error, results, fields) {
-//   if (error) throw error;
-//   console.log('The insert is: ', results);
-// });
-//
-// console.log(query.sql);
-
-//loginroutes.register(req, res, mysqlConnection);
 
 app.use('/', index);
 app.use('/users', users);

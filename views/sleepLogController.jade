@@ -1,0 +1,24 @@
+DOCTYPE
+html
+  head
+    meta(charset="utf-8")
+    title Sleep Log Controller
+    link(rel="stylesheet" href="./stylesheets/style.css")
+  body
+    div(class="container")
+      form(action='/controller_reciever' method='POST' id="logForm")
+        div(class="div")
+          button( class="button" onclick="goodMorning()" ) Good Night!
+          button( class="button" ) Good Morning!
+        div(class="div")
+          input(id="start" class="time-presenter" type="text" name="start" value="")
+          input(id="end" class="time-presenter" type="text" name="end" value="")
+        div(class="div night")
+          p Recent Night
+          input(class="sleep-time" type="text" name="" value="")
+        div(class="div")
+          button(type="button" name="button") Weeks
+          button(type="button" name="button") Months
+        p
+          input(type="hidden" name="user_id" value="1")
+    script(type="text/javascript" src="./javascripts/sleepLogController.js")

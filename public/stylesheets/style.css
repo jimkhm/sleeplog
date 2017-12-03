@@ -6,3 +6,30 @@ body {
 a {
   color: #00B7FF;
 }
+
+.div {
+  text-align: center;
+  margin: 10px 10px 10px 10px;
+}
+
+.button {
+  width: 40%;
+}
+
+.time-presenter{
+  width: 38%;
+}
+
+.sleep-time {
+  width: 78%
+}
+
+.night {
+  margin: 25px 10px 10px 10px;
+}
+
+.container {
+  border: solid 1px;
+  width: 40%;
+  margin: auto;
+}
