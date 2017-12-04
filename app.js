@@ -35,19 +35,7 @@ app.get('/login_form', function(req, res) {
   res.render('login_form');
 });
 
-app.get('/controller', function(req, res) {
-  res.render('sleepLogController');
-});
 
-app.post('/controller_reciever', function(req, res) {
-  if(req.body.user_id !== "undefined"){//Id check
-    if(req.body.start.slice(-5) === "SLEEP"){
-      res.send(req.body.start.slice(-5));
-    }
-  } else {
-    res.send("Please Login")
-  }
-});
 
 
 const pool = require('./modules/mysql');
@@ -124,6 +112,45 @@ app.post('/login', function(req, res) {
       }
     }
   })
+});
+
+app.get('/controller', function(req, res) {
+  res.render('sleepLogController');
+});
+
+app.post('/controller_reciever', function(req, res) {
+
+  var currentTime = new Date();
+  console.log("controller_reciever");
+  console.log(req.body);
+
+  if(req.body.user_id !== "undefined"){//Id check
+
+    if(req.body.end_sign === "end") {
+       res.send("end!!");
+    } else if(req.body.start.slice(-5) === "SLEEP"){
+      var sleepLog = {
+        user_id: req.body.user_id,
+        start_time: currentTime
+      }
+
+      const query = pool.query('INSERT INTO sleep_log SET ?', sleepLog,
+        function(error, results, fields) {
+          if(error) {
+            console.log("error ocurred", error);
+            res.send({
+              "code": 400,
+              "failed": "error ocurred: " + error
+            })
+          } else {
+            console.log('The solution is', results);
+          }
+        }
+      )
+    }
+  } else {
+    res.send("Please Login")
+  }
 });
 
 

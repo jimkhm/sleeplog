@@ -1,6 +1,7 @@
 
 //--->>> Date and Time Presenter <<<---
-function getFormattedDate() {
+function getFormattedDate(value) {
+  console.log(value);
   var time = new Date();
 
   var month = ( "0" + ( time.getMonth()+1 ) ).slice(-2);
@@ -10,19 +11,46 @@ function getFormattedDate() {
 
   var formattedDate = month + "/" + date + "  "+ hours + ":" + minutes;
 
-  document.getElementById("start").value = formattedDate;
+  document.getElementById(value).value = formattedDate;
 }
 
-function updateDate(){
-    getFormattedDate();
-    window.setInterval("getFormattedDate()", 30000);
+var interval;
+
+function updateDateStart(){
+    //document.getElementById("end_sign").value=""
+    getFormattedDate("start");
+    interval = window.setInterval("getFormattedDate('start')", 30000);
 }
 
-updateDate();
+function updateDateEnd(){
+    getFormattedDate("end");
+    interval = window.setInterval("getFormattedDate('end')", 30000);
+}
+
+updateDateStart();
 
 //--->>>Sleep Log Start <<<---
+function goodNight(){
+  if(document.getElementById("start").value.slice(-5) === "SLEEP") {
+    console.log("already started");
+  } else {
+    const currentTime = document.getElementById("start").value;
+    document.getElementById("start").value = currentTime + " SLEEP";
+    document.getElementById("logForm").submit();
+    window.clearInterval(interval);
+    updateDateEnd();
+  }
+}
+
+//--->>>Sleep Log End <<<---
 function goodMorning(){
-  const currentTime = document.getElementById("start").value;
-  document.getElementById("start").value = currentTime + "SLEEP";
-  document.getElementById("logForm").submit();
+  if(document.getElementById("end").value.slice(-5) === "") {
+    console.log("already ended");
+  } else {
+    document.getElementById("end_sign").value="end";
+    document.getElementById("end").value = "";
+    document.getElementById("logForm").submit();
+    window.clearInterval(interval);
+    updateDateStart();
+  }
 }

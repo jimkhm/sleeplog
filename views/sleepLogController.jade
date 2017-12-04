@@ -8,8 +8,8 @@ html
     div(class="container")
       form(action='/controller_reciever' method='POST' id="logForm")
         div(class="div")
-          button( class="button" onclick="goodMorning()" ) Good Night!
-          button( class="button" ) Good Morning!
+          button( class="button" onclick="goodNight()" ) Good Night!
+          button( class="button" onclick="goodMorning()" ) Good Morning!
         div(class="div")
           input(id="start" class="time-presenter" type="text" name="start" value="")
           input(id="end" class="time-presenter" type="text" name="end" value="")
@@ -21,4 +21,5 @@ html
           button(type="button" name="button") Months
         p
           input(type="hidden" name="user_id" value="1")
+          input(id="end_sign" type="hidden" name="end_sign" value="")
     script(type="text/javascript" src="./javascripts/sleepLogController.js")
