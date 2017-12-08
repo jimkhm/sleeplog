@@ -26,7 +26,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 app.get('/form', function(req, res) {
   res.render('form');
 });
@@ -34,8 +33,6 @@ app.get('/form', function(req, res) {
 app.get('/login_form', function(req, res) {
   res.render('login_form');
 });
-
-
 
 
 const pool = require('./modules/mysql');
@@ -105,9 +102,9 @@ app.post('/login', function(req, res) {
             });
           }
       } else {
-        res.send({
-          "code": 204,
-          "success": "Email does not exists"
+        res.status(204).send({
+          "success": true,
+          "message": "Email does not exists"
         })
       }
     }
@@ -118,45 +115,84 @@ app.get('/controller', function(req, res) {
   res.render('sleepLogController');
 });
 
-app.post('/controller_reciever', function(req, res) {
+var validation = function(req, res, next){
+                    console.log("controller_reciever");
+                    if (req.body.id !== undefined && req.body.id !== null) {
+                      next();
+                    } else {
+                      res.status(403).send({
+                        message : "forbidden"
+                      })
+                    }
+                  }
 
-  var currentTime = new Date();
-  console.log("controller_reciever");
-  console.log(req.body);
+app.post('/controller_reciever', validation, function(req, res) {
 
-  if(req.body.user_id !== "undefined"){//Id check
+  var date;
+  date = new Date();
+  date = date.getFullYear() + '-' +
+          ('00' + (date.getMonth()+1)).slice(-2) + '-' +
+          ('00' + date.getDate()).slice(-2) + ' ' +
+          ('00' + date.getHours()).slice(-2) + ':' +
+          ('00' + date.getMinutes()).slice(-2) + ':' +
+          ('00' + date.getSeconds()).slice(-2);
+  console.log(date);
 
-    if(req.body.end_sign === "end") {
-       res.send("end!!");
-    } else if(req.body.start.slice(-5) === "SLEEP"){
       var sleepLog = {
-        user_id: req.body.user_id,
-        start_time: currentTime
+        user_id : req.body.id,
+        start_time: date
+      };
+
+      //start button이 click되었고 button_flag가 true일 때
+      if(req.body.is_start && req.body.button_flag) {
+        const query = pool.query('INSERT INTO sleep_log SET ?', sleepLog,
+          function(error, results, fields) {
+            if(error) {
+              console.log("error ocurred", error);
+              res.status(500).send({
+                message : "internal server error"
+              });
+            } else {
+              console.log('The solution is', results);
+              res.status(200).send({
+                success : true,
+                message : "starting log success",
+                button_flag: false,
+                logged_start_time: sleepLog.start_time
+              });
+            }
+          });
+        //end button이 눌러졌고 button_flag가 false일 때
+      } else if(req.body.is_end && !req.body.button_flag) {
+        console.log(req.body)
+        const query = pool.query('UPDATE sleep_log SET end_time = ? WHERE user_id = ? and start_time= ?', [new Date, req.body.id, req.body.logged_start_time],
+          function(error, results, fields) {
+            console.log('results:', results);
+            console.log('fields:', fields);
+
+            if(error) {
+              console.log('The solution is', error);
+              res.status(500).send({
+                message: "internal sever error"
+              });
+            } else {
+              res.status(200).send({
+                success: true,
+                message: "ending log success",
+                button_flag: true
+              });
+            }
+        });
+      } else {
+        res.send({
+          message: "Button has already been activated!",
+          button_flag: req.body.button_flag
+        });
       }
-
-      const query = pool.query('INSERT INTO sleep_log SET ?', sleepLog,
-        function(error, results, fields) {
-          if(error) {
-            console.log("error ocurred", error);
-            res.send({
-              "code": 400,
-              "failed": "error ocurred: " + error
-            })
-          } else {
-            console.log('The solution is', results);
-          }
-        }
-      )
-    }
-  } else {
-    res.send("Please Login")
-  }
 });
-
 
 app.use('/', index);
 app.use('/users', users);
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

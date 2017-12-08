@@ -7,20 +7,24 @@ a {
   color: #00B7FF;
 }
 
-.div {
+.container {
   text-align: center;
   margin: 10px 10px 10px 10px;
 }
 
-.button {
+.btn-time-stamp {
   width: 40%;
+}
+
+.btn-show-graph{
+  width: 30%;
 }
 
 .time-presenter{
   width: 38%;
 }
 
-.sleep-time {
+.recent-sleep {
   width: 78%
 }
 
@@ -32,4 +36,17 @@ a {
   border: solid 1px;
   width: 40%;
   margin: auto;
+}
+.clock-container{
+  text-align: center;
+  width:100%;
+}
+
+.clock {
+  width: 15vh;
+  border: 1px solid;
+}
+
+.clock-left {
+  margin:auto;
 }
