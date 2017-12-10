@@ -11,6 +11,9 @@ var users = require('./routes/users');
 var loginroutes = require('./routes/loginroutes');
 var sha256 = require('sha256');
 
+var jwt = require('jsonwebtoken');
+
+
 var app = express();
 app.locals.pretty = true;
 
@@ -20,11 +23,34 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+
+// --->>> PRINT THE REQUEST LOG ON CONSOLE <<<---
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/controller',function(req, res, next) {
+
+  var token = req.cookies.auth;
+
+  // decode token
+  if (token) {
+
+    jwt.verify(token, 'secret', function(err, token_data) {
+      if (err) {
+         return res.status(403).send('Error');
+      } else {
+        req.user_data = token_data;
+        next();
+      }
+    });
+
+  } else {
+    return res.status(403).send('No token');
+  }
+});
 
 app.get('/form', function(req, res) {
   res.render('form');
@@ -81,6 +107,8 @@ app.post('/login', function(req, res) {
 
   var email = req.body.email;
   var password = req.body.password;
+  const secret = req.app.get('jwt-secret');
+
 
   pool.query('SELECT * FROM user WHERE email=?', [email],
   function(error, results, fields) {
@@ -92,9 +120,19 @@ app.post('/login', function(req, res) {
     } else {
       // console.log('The solution is: ', result);
       if(results.length >0){
-
+          console.log(results[0]);
+          console.log(results[0].password);
+          console.log(sha256(password+results[0].created_at));
           if(results[0].password === sha256(password+results[0].created_at) ) {
-            res.render('login_success');
+
+            var myToken = jwt.sign({ email: results[0].email },
+                                      'secret',
+                                     { expiresIn: 24 * 60 * 60 });
+
+           res.cookie('auth', myToken);
+           res.redirect('/controller');
+
+
           } else {
             res.status(200).send({
               "success": false,
@@ -110,6 +148,7 @@ app.post('/login', function(req, res) {
     }
   })
 });
+
 
 app.get('/controller', function(req, res) {
   res.render('sleepLogController');
@@ -190,6 +229,9 @@ app.post('/controller_reciever', validation, function(req, res) {
         });
       }
 });
+
+
+
 
 app.use('/', index);
 app.use('/users', users);
