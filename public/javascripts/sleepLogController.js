@@ -16,8 +16,6 @@ function getFormattedDate(value) {
   document.getElementById(value).innerHTML = formattedDate;
 }
 
-
-
 function updateDateStart(value){
     getFormattedDate(value);
     interval = window.setInterval("getFormattedDate('start')", 30000);
@@ -27,7 +25,7 @@ updateDateStart("start");
 
 //moment.js 시간 관련 지난 메일 참조
 
-let button_flag = true;
+//let button_flag = true;
 let logged_start_time;
 
 function sendRequest(data) {
@@ -37,7 +35,8 @@ function sendRequest(data) {
       headers: {
           'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      cookie: document.cookie
     }
    );
 
@@ -46,7 +45,8 @@ function sendRequest(data) {
   }).then(function(res) {
     console.log(res);
     button_flag = res.button_flag;
-    logged_start_time = res.logged_start_time;
+    localStorage.setItem('logged_start_time', res.logged_start_time);
+    console.log(localStorage.getItem('logged_start_time'));
   }).catch(function(err) {
     console.log(err);
   });
@@ -54,12 +54,11 @@ function sendRequest(data) {
 
 function goodMorning() {
   var data = {
-    id: 1,
+    auth:document.cookie,//jtw 에서 받아오는 로직
     is_start: false,
-    is_end: true,
-    button_flag: button_flag,
-    logged_start_time: logged_start_time
+    logged_start_time: localStorage.getItem('logged_start_time')
   }
+  console.log(data);
   sendRequest(data);
   window.clearInterval(interval);
   document.getElementById("end").innerHTML = "";
@@ -69,10 +68,8 @@ function goodMorning() {
 
 function goodNight() {
   var data = {
-    id: 1,
-    is_start: true,
-    is_end: false,
-    button_flag: button_flag
+    auth: document.cookie,
+    is_start: true
   }
 
   sendRequest(data);
@@ -80,35 +77,25 @@ function goodNight() {
   updateDateStart("end");
 }
 
+function sendRequsetForRecentSleepHours() {
+  var myRequest = new Request('/lastest_sleeptime', {
+    method: "GET",
+    headers: {
+      "Contents_Type": "application/json"
+    }
+  });
 
+  fetch(myRequest).then(function(response) {
+    console.log(response);
+    return response.json();
+  }).then(function(res) {
+    console.log(REQUEST);
+  }).catch(function(err) {
+    console.log(err);
+  });
+}
+sendRequsetForRecentSleepHours();
 
-
-
-//--->>>Sleep Log Start <<<---
-// function goodNight(){
-//   if(document.getElementById("start").value.slice(-5) === "SLEEP") {
-//     console.log("already started");
-//   } else {
-//     const currentTime = document.getElementById("start").value;
-//     document.getElementById("start").value = currentTime + " SLEEP";
-//     document.getElementById("logForm").submit();
-//     window.clearInterval(interval);
-//     updateDateEnd();
-//   }
-// }
-
-//--->>>Sleep Log End <<<---
-// function goodMorning(){
-//   if(document.getElementById("end").value.slice(-5) === "") {
-//     console.log("already ended");
-//   } else {
-//     document.getElementById("end_sign").value="end";
-//     document.getElementById("end").value = "";
-//     document.getElementById("logForm").submit();
-//     window.clearInterval(interval);
-//     updateDateStart();
-//   }
-// }
 
 
 // 직렬화
