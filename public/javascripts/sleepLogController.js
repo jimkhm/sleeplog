@@ -45,7 +45,7 @@ function sendRequest(data) {
   }).then(function(res) {
     console.log(res);
     button_flag = res.button_flag;
-    localStorage.setItem('logged_start_time', res.logged_start_time);
+    //localStorage.setItem('logged_start_time', res.logged_start_time);
     console.log(localStorage.getItem('logged_start_time'));
   }).catch(function(err) {
     console.log(err);
@@ -55,8 +55,8 @@ function sendRequest(data) {
 function goodMorning() {
   var data = {
     auth:document.cookie,//jtw 에서 받아오는 로직
-    is_start: false,
-    logged_start_time: localStorage.getItem('logged_start_time')
+    is_start: false//,
+    //logged_start_time: localStorage.getItem('logged_start_time')
   }
   console.log(data);
   sendRequest(data);
@@ -94,7 +94,7 @@ function sendRequsetForRecentSleepHours() {
     console.log(err);
   });
 }
-sendRequsetForRecentSleepHours();
+//sendRequsetForRecentSleepHours();
 
 
 

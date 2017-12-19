@@ -241,7 +241,7 @@ app.get('/controller', function(req, res) {
 
 app.post('/controller_reciever', function(req, res) {
   console.log("controller_reciever");
-  var date;
+  var date; //.toUTCString();
   date = new Date();
   date = date.getFullYear() + '-' +
           ('00' + (date.getMonth()+1)).slice(-2) + '-' +
@@ -265,7 +265,7 @@ app.post('/controller_reciever', function(req, res) {
         console.log("jwt.verify: ", token_data);
 
         var sleepLog = {
-          user_id : 1,
+          user_id : 50,
           start_time: date
         };
         console.log(token);
@@ -298,8 +298,8 @@ app.post('/controller_reciever', function(req, res) {
                       res.status(200).send({
                         success : true,
                         message : "starting log success",
-                        button_flag: false,
-                        logged_start_time: sleepLog.start_time
+                        button_flag: false//,
+                        //logged_start_time: sleepLog.start_time//ToDo 삭제 예정
                       });
                     }
                   });
@@ -312,7 +312,12 @@ app.post('/controller_reciever', function(req, res) {
         //end button이 눌러졌고 button_flag가 false일 때
         } else {
           console.log(req.body)
-          const query = pool.query('UPDATE sleep_log SET end_time = ? WHERE user_id = ? and start_time= ?', [date, sleepLog.user_id, req.body.logged_start_time],
+          //const query = pool.query('UPDATE sleep_log SET end_time = ? WHERE user_id = ? and start_time= ?', [date, sleepLog.user_id, req.body.logged_start_time],
+
+
+          const query = pool.query('UPDATE sleep_log SET end_time = ? WHERE user_id = ? '+
+          'AND end_time IS NULL AND start_time >= (NOW()- INTERVAL 18 HOUR)' +
+          'ORDER BY id DESC LIMIT 1', [date, sleepLog.user_id],
             function(error, results, fields) {
               console.log('results:', results);
               console.log('fields:', fields);
@@ -339,13 +344,22 @@ app.post('/controller_reciever', function(req, res) {
 
 app.get('/lastest_sleeptime', function(req, res){
   console.log(req.user_data.id);
-  var latestDay = pool.query('SELECT * FROM sleep_log WHERE start_time = (SELECT MAX(start_time) FROM sleep_log '+
-  'WHERE end_time IS NOT NULL AND user_id = ?) AND user_id = ?',[req.user_data.id, req.user_data.id],
+  // var latestDay = pool.query('SELECT * FROM sleep_log WHERE start_time = (SELECT MAX(start_time) FROM sleep_log '+
+  // 'WHERE end_time IS NOT NULL AND user_id = ?) AND user_id = ?',[req.user_data.id, req.user_data.id],
+
+  var latestDay = pool.query('SELECT * FROM sleep_log '+
+  'WHERE end_time IS NOT NULL AND user_id = ? ORDER BY start_time DESC LIMIT 1', [req.user_data.id],
 
   function(error, results, fields ) {
       console.log(results);
       let start_time = results[0].start_time;
       let end_time = results[0].end_time;
+
+      console.log('###############');
+      console.log(start_time);
+      console.log(end_time);
+      console.log('###############');
+
       //start_time = start_time.split(/[- : T]/);
       //end_time = end_time.split(/[- : T]/);
       //start_time = new Date(Date.UTC(start_time[0], start_time[1]-1, start_time[2], start_time[3], start_time[4]));

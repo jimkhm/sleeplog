@@ -44,9 +44,16 @@ a {
 
 .clock {
   width: 15vh;
+  height: 3vh;
   border: 1px solid;
 }
 
 .clock-left {
-  margin:auto;
+  float: left;
+  margin-left: 35px;
+}
+
+.clock-right {
+  float: right;
+  margin-right: 35px;
 }
